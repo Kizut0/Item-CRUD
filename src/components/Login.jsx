@@ -1,57 +1,67 @@
 import { useRef, useState } from "react";
-import { useUser } from "../contexts/UserProvider";
-import { Navigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
+import { useUser } from "../context/UserProvider";
+
 export default function Login() {
-    const [controlState, setControlState] = useState({
-        isLoggingIn: false,
-        isLoginError: false,
-        isLoginOk: false
-    });
-    const emailRef = useRef();
-    const passRef = useRef();
-    const { user, login } = useUser();
-    async function onLogin() {
-        setControlState((prev) => {
-            return {
-                ...prev,
-                isLoggingIn: true
-            }
-        }); const email = emailRef.current.value;
-        const pass = passRef.current.value;
-        const result = await login(email, pass);
-        setControlState((prev) => {
-            return {
-                isLoggingIn: false,
-                isLoginError: !result,
-                isLoginOk: result
-            }
-        });
+  const navigate = useNavigate();
+  const [controlState, setControlState] = useState({
+    isLoggingIn: false,
+    isLoginError: false,
+    isLoginOk: false,
+  });
+  const emailRef = useRef();
+  const passRef = useRef();
+  const { user, login } = useUser();
+
+  async function onLogin() {
+    setControlState((prev) => ({
+      ...prev,
+      isLoggingIn: true,
+    }));
+
+    const email = emailRef.current.value;
+    const pass = passRef.current.value;
+    const result = await login(email, pass);
+
+    setControlState((prev) => ({
+      ...prev,
+      isLoggingIn: false,
+      isLoginError: !result,
+      isLoginOk: result,
+    }));
+
+    if (result) {
+      navigate("/items", { replace: true });
     }
-    if (!user.isLoggedIn)
-        return (
-            <div>
-                <table>
-                    <tbody>
-                        <tr>
-                            <th>Email</th>
-                            <td><input type="text" name="email" id="email" ref={emailRef} />
-                            </td>
-                        </tr>
-                        <tr>
-                            <th>Password</th>
-                            <td><input type="password" name="password" id="password"
-                                ref={passRef} /> </td>
-                        </tr>
-                    </tbody>
-                </table>
-                <button onClick={onLogin}
-                    disabled={controlState.isLoggingIn}>Login</button>
-                {controlState.isLoginError && <div>Login incorrect</div>}
-                {user.isLoggedIn && <div>Login Success</div>}
-            </div>
-        );
-    else
-        return (
-            <Navigate to="/profile" replace />
-        );
-} 
+  }
+
+  if (!user.isLoggedIn)
+    return (
+      <div className="auth-page">
+        <div className="auth-card">
+          <div className="auth-head">
+            <h1>Welcome back</h1>
+            <p className="muted">Sign in to manage items and profile.</p>
+          </div>
+          <div className="form">
+            <label>
+              Email
+              <input type="text" name="email" id="email" ref={emailRef} />
+            </label>
+            <label>
+              Password
+              <input type="password" name="password" id="password" ref={passRef} />
+            </label>
+            <button onClick={onLogin} disabled={controlState.isLoggingIn}>
+              {controlState.isLoggingIn ? "Signing in..." : "Login"}
+            </button>
+            {controlState.isLoginError && (
+              <div className="error-text">Login incorrect</div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+
+  return <Navigate to="/items" replace />;
+}
